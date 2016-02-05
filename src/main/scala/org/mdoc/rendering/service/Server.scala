@@ -1,16 +1,24 @@
 package org.mdoc.rendering.service
 
 import com.typesafe.scalalogging.StrictLogging
+import eu.timepit.properly.Property
+import eu.timepit.properly.Property.PropertySyntax
 import org.http4s.server.blaze.BlazeBuilder
+import scala.util.Try
 
 object Server extends App with StrictLogging {
-  val server = BlazeBuilder
-    .bindHttp(8081, "::")
-    .mountService(Service.route)
-    .start
+  val httpPort = Property.getAsIntOrElse("HTTP_PORT", 8081).runTask
 
-  server.attemptRun.fold(t => {
-    logger.error(t.getMessage, t)
-    sys.exit(1)
-  }, _.awaitShutdown())
+  val server = httpPort.flatMap { port =>
+    BlazeBuilder
+      .bindHttp(port, "::")
+      .mountService(Service.route)
+      .start
+  }
+
+  Try(server.run.awaitShutdown()).recover {
+    case throwable =>
+      logger.error(throwable.getMessage, throwable)
+      sys.exit(1)
+  }
 }

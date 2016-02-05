@@ -13,3 +13,16 @@ libraryDependencies ++= Seq(
   "org.m-doc" %% "rendering-engines" % Version.renderingEngines,
   "org.scalacheck" %% "scalacheck" % Version.scalacheck % "test"
 )
+
+// sbt-native-packager
+enablePlugins(JavaServerAppPackaging)
+maintainer := "m-doc <info@m-doc.org>"
+packageSummary := description.value
+packageDescription := s"See <${homepage.value.getOrElse("")}> for more information."
+
+// deb settings
+enablePlugins(DebianPlugin)
+debianPackageDependencies in Debian ++= Seq("wkhtmltopdf", "xvfb")
+serverLoading in Debian := com.typesafe.sbt.packager.archetypes.ServerLoader.SystemV
+
+validateCommands += "debian:packageBin"

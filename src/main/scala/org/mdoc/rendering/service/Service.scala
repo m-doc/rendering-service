@@ -1,7 +1,7 @@
 package org.mdoc.rendering.service
 
 import io.circe.generic.auto._
-import org.http4s.{ Response, HttpService, circe }
+import org.http4s.{ circe, HttpService, Response }
 import org.http4s.MediaType._
 import org.http4s.dsl._
 import org.http4s.headers.`Content-Type`

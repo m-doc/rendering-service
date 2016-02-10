@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 sleep 30s # give Bintray time to update the repository
 
 chmod 600 cloud-identity

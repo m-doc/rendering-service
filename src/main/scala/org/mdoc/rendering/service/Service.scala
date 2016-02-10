@@ -2,34 +2,35 @@ package org.mdoc.rendering.service
 
 import io.circe.generic.auto._
 import org.http4s.{ circe, HttpService, Response }
-import org.http4s.MediaType._
 import org.http4s.dsl._
-import org.http4s.headers.`Content-Type`
-import org.mdoc.common.model.CirceInstances._
 import org.mdoc.common.model.CompleteTemplate
+import org.mdoc.common.model.circe._
+import org.mdoc.common.model.RenderingEngine
 import org.mdoc.fshell.Shell.ShellSyntax
-import org.mdoc.rendering.engines.Wkhtmltopdf
+import org.mdoc.rendering.engines.{ LibreOffice, Wkhtmltopdf }
 import scalaz.concurrent.Task
 
 object Service {
   val route = HttpService {
     case req @ POST -> Root / "render" =>
-      req.decode[CompleteTemplate] { a =>
-        // TODO: CompleteTemplate => Task[Response]
-        val ret = Wkhtmltopdf.htmlToPdf(a.body)
-        ret.runTask.flatMap(bs => Ok(bs).replaceAllHeaders(`Content-Type`(`application/pdf`)))
-      }(circe.jsonOf)
+      req.decode[CompleteTemplate](render)(circe.jsonOf)
 
     case GET -> Root / "version" =>
       Ok(BuildInfo.version)
   }
 
-  def render(template: CompleteTemplate): Task[Response] = {
-    // What should be the format of the response? PDF, PNG, JPG, HTML, PlainText?
-    // What is the input format? Different engines can handle different input formats? ODT, DOCX, HTML, LaTeX
-    // Which engine should we use? Output quality differs between engines.
+  // example body:
+  // {"cfg":{"outputFormat":{"Pdf":{}},"engine":{"LibreOffice":{}}},"doc":{"format":{"Html":{}},"body":"SGVsbG8="}}
 
-    // The body of CompleteTemplate has a specific format.
-    ???
+  def render(template: CompleteTemplate): Task[Response] = {
+    template.cfg.engine match {
+      case RenderingEngine.LibreOffice =>
+        LibreOffice.convertTo(template.doc, template.cfg.outputFormat).runTask
+          .flatMap(bs => Ok(bs.body).replaceAllHeaders(Utils.formatContentType(bs.format)))
+      case RenderingEngine.Wkhtmltopdf =>
+        Wkhtmltopdf.htmlToPdf(template.doc.body).runTask
+          .flatMap(bs => Ok(bs.body).replaceAllHeaders(Utils.formatContentType(bs.format)))
+      case _ => BadRequest("")
+    }
   }
 }

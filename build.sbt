@@ -3,15 +3,15 @@ enablePlugins(MdocPlugin)
 name := "rendering-service"
 
 libraryDependencies ++= Seq(
+  MdocLibrary.commonModel,
+  MdocLibrary.renderingEngines,
   Library.circeGeneric,
-  Library.commonModel,
   Library.http4sCirce,
   Library.http4sCore,
   Library.http4sDsl,
   Library.http4sBlazeServer,
   Library.logbackClassic,
   Library.properly,
-  Library.renderingEngines,
   Library.scalaLogging,
   Library.scalacheck % "test"
 )
@@ -24,7 +24,7 @@ packageDescription := s"See <${homepage.value.getOrElse("")}> for more informati
 
 // deb settings
 enablePlugins(DebianPlugin)
-debianPackageDependencies in Debian ++= Seq("wkhtmltopdf", "xvfb")
+debianPackageDependencies in Debian ++= Seq("libreoffice-writer", "wkhtmltopdf", "xvfb")
 serverLoading in Debian := com.typesafe.sbt.packager.archetypes.ServerLoader.SystemV
 
 validateCommands += "debian:packageBin"

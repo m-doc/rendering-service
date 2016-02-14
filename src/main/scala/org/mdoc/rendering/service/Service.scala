@@ -13,7 +13,9 @@ import scalaz.concurrent.Task
 object Service {
   val route = HttpService {
     case req @ POST -> Root / "render" =>
-      req.decode[CompleteTemplate](render)(circe.jsonOf)
+      req.decode[CompleteTemplate](render)(circe.jsonOf).handleWith {
+        case throwable => InternalServerError(throwable.getMessage)
+      }
 
     case GET -> Root / "version" =>
       Ok(BuildInfo.version)

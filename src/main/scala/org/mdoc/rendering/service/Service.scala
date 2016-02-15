@@ -3,17 +3,16 @@ package org.mdoc.rendering.service
 import io.circe.generic.auto._
 import org.http4s.{ circe, HttpService, Response }
 import org.http4s.dsl._
-import org.mdoc.common.model.CompleteTemplate
+import org.mdoc.common.model.{ Document, RenderingInput }
 import org.mdoc.common.model.circe._
-import org.mdoc.common.model.RenderingEngine
 import org.mdoc.fshell.Shell.ShellSyntax
-import org.mdoc.rendering.engines.{ LibreOffice, Wkhtmltopdf }
+import org.mdoc.rendering.engines.generic
 import scalaz.concurrent.Task
 
 object Service {
   val route = HttpService {
     case req @ POST -> Root / "render" =>
-      req.decode[CompleteTemplate](render)(circe.jsonOf).handleWith {
+      req.decode[RenderingInput](render)(circe.jsonOf).handleWith {
         case throwable => InternalServerError(throwable.getMessage)
       }
 
@@ -21,18 +20,9 @@ object Service {
       Ok(BuildInfo.version)
   }
 
-  // example body:
-  // {"cfg":{"outputFormat":{"Pdf":{}},"engine":{"LibreOffice":{}}},"doc":{"format":{"Html":{}},"body":"SGVsbG8="}}
+  def render(input: RenderingInput): Task[Response] =
+    generic.renderDoc(input).runTask.flatMap(docToResponse)
 
-  def render(template: CompleteTemplate): Task[Response] = {
-    template.cfg.engine match {
-      case RenderingEngine.LibreOffice =>
-        LibreOffice.convertTo(template.doc, template.cfg.outputFormat).runTask
-          .flatMap(bs => Ok(bs.body).replaceAllHeaders(Utils.formatContentType(bs.format)))
-      case RenderingEngine.Wkhtmltopdf =>
-        Wkhtmltopdf.htmlToPdf(template.doc.body).runTask
-          .flatMap(bs => Ok(bs.body).replaceAllHeaders(Utils.formatContentType(bs.format)))
-      case _ => BadRequest("")
-    }
-  }
+  def docToResponse(doc: Document): Task[Response] =
+    Ok(doc.body).withType(doc.format.toMediaType)
 }

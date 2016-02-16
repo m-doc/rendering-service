@@ -17,14 +17,8 @@ libraryDependencies ++= Seq(
 )
 
 // sbt-native-packager
-enablePlugins(JavaServerAppPackaging)
-maintainer := "m-doc <info@m-doc.org>"
-packageSummary := description.value
-packageDescription := s"See <${homepage.value.getOrElse("")}> for more information."
-
-// deb settings
-enablePlugins(DebianPlugin)
+enablePlugins(JavaServerAppPackaging, DebianPlugin)
 debianPackageDependencies in Debian ++= Seq("libreoffice-writer", "wkhtmltopdf", "xvfb")
 serverLoading in Debian := com.typesafe.sbt.packager.archetypes.ServerLoader.SystemV
 
-validateCommands += "debian:packageBin"
+mdocValidateCommands += "debian:packageBin"

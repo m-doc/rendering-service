@@ -18,7 +18,7 @@ object Server extends App with StrictLogging {
 
   Try(server.run.awaitShutdown()).recover {
     case throwable =>
-      logger.error(throwable.getMessage, throwable)
+      logger.error("awaitShutdown()", throwable)
       sys.exit(1)
   }
 }

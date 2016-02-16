@@ -9,14 +9,15 @@ import org.mdoc.common.model.circe._
 import org.mdoc.fshell.Shell.ShellSyntax
 import org.mdoc.rendering.engines.generic
 import scalaz.concurrent.Task
+import scalaz.syntax.bind._
 
 object Service extends StrictLogging {
   val route = HttpService {
     case req @ POST -> Root / "render" =>
       req.decode[RenderingInput](render)(circe.jsonOf).handleWith {
         case throwable =>
-          logger.error("POST /render", throwable)
-          InternalServerError(throwable.getMessage)
+          Task.delay(logger.error("POST /render", throwable)) >>
+            InternalServerError(throwable.getMessage)
       }
 
     case GET -> Root / "version" =>

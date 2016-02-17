@@ -20,14 +20,14 @@ object Service extends StrictLogging {
     case req @ POST -> Root / "render" =>
       endpointRender(req)
 
-    case req @ GET -> Root / "render" / "jpg" / namdAndUrl =>
-      endpointRenderFormat(req, Jpeg, namdAndUrl)
+    case req @ GET -> Root / "render" / "jpg" / _ =>
+      endpointRenderFormat(req, Jpeg)
 
-    case req @ GET -> Root / "render" / "pdf" / namdAndUrl =>
-      endpointRenderFormat(req, Pdf, namdAndUrl)
+    case req @ GET -> Root / "render" / "pdf" / _ =>
+      endpointRenderFormat(req, Pdf)
 
-    case req @ GET -> Root / "render" / "png" / nameAndUrl =>
-      endpointRenderFormat(req, Png, nameAndUrl)
+    case req @ GET -> Root / "render" / "png" / _ =>
+      endpointRenderFormat(req, Png)
 
     case GET -> Root / "version" =>
       Ok(BuildInfo.version)
@@ -39,7 +39,7 @@ object Service extends StrictLogging {
   def endpointRender(req: Request): Task[Response] =
     req.decode[RenderingInput](renderDoc)(circe.jsonOf).handleWith(logException(req))
 
-  def endpointRenderFormat(req: Request, format: Format, nameAndUrl: String): Task[Response] =
+  def endpointRenderFormat(req: Request, format: Format): Task[Response] =
     extractUrl(req).fold(BadRequest(_), renderUrl(_, format)).handleWith(logException(req))
 
   def extractParam(req: Request, param: String): Xor[String, String] = {

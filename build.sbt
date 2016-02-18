@@ -18,7 +18,13 @@ libraryDependencies ++= Seq(
 
 // sbt-native-packager
 enablePlugins(JavaServerAppPackaging, DebianPlugin)
-debianPackageDependencies in Debian ++= Seq("libreoffice-writer", "wkhtmltopdf", "xvfb")
+debianPackageDependencies in Debian ++= Seq(
+  "libreoffice-writer",
+  "pandoc",
+  "texlive",
+  "wkhtmltopdf",
+  "xvfb"
+)
 serverLoading in Debian := com.typesafe.sbt.packager.archetypes.ServerLoader.SystemV
 
 mdocValidateCommands += "debian:packageBin"

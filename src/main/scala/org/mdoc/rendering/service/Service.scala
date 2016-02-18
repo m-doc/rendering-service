@@ -37,18 +37,17 @@ object Service extends StrictLogging {
     Ok(doc.body).withType(doc.format.toMediaType)
 
   def endpointRender(req: Request): Task[Response] =
-    req.decode[RenderingInput](renderDoc)(circe.jsonOf).handleWith(logException(req))
+    req.decode[RenderingInput](renderDoc)(circe.jsonOf)
+      .handleWith(logException(req))
 
   def endpointRenderFormat(req: Request, format: Format): Task[Response] =
-    extractUrl(req).fold(BadRequest(_), renderUrl(_, format)).handleWith(logException(req))
+    extractParam(req, "url").fold(BadRequest(_), renderUrl(_, format))
+      .handleWith(logException(req))
 
   def extractParam(req: Request, param: String): Xor[String, String] = {
     val message = s"""Parameter "$param" is not specified."""
     Xor.fromOption(req.params.get(param), message)
   }
-
-  def extractUrl(req: Request): Xor[String, String] =
-    extractParam(req, "url")
 
   def logException(req: Request): PartialFunction[Throwable, Task[Response]] = {
     case throwable =>

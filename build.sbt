@@ -27,4 +27,9 @@ debianPackageDependencies in Debian ++= Seq(
 )
 serverLoading in Debian := com.typesafe.sbt.packager.archetypes.ServerLoader.SystemV
 
+linuxPackageMappings +=
+  packageTemplateMapping(s"/home/${daemonUser.in(Linux).value}")()
+    .withUser(daemonUser.in(Linux).value)
+    .withGroup(daemonUser.in(Linux).value)
+
 mdocValidateCommands += "debian:packageBin"

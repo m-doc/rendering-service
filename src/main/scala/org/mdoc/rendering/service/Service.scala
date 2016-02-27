@@ -7,7 +7,7 @@ import org.http4s.{ circe, HttpService, Request, Response }
 import org.http4s.dsl._
 import org.mdoc.common.model.Document
 import org.mdoc.common.model.Format
-import org.mdoc.common.model.Format.{ Jpeg, Pdf, Png }
+import org.mdoc.common.model.Format.{ Bmp, Jpeg, Pdf, Png, Svg }
 import org.mdoc.common.model.RenderingInput
 import org.mdoc.common.model.circe._
 import org.mdoc.fshell.Shell.ShellSyntax
@@ -24,6 +24,9 @@ object Service extends StrictLogging {
     case req @ POST -> Root / "render" =>
       endpointRender(req)
 
+    case req @ GET -> Root / "render" / "bmp" / _ =>
+      endpointRenderFormat(req, Bmp)
+
     case req @ GET -> Root / "render" / "jpg" / _ =>
       endpointRenderFormat(req, Jpeg)
 
@@ -32,6 +35,9 @@ object Service extends StrictLogging {
 
     case req @ GET -> Root / "render" / "png" / _ =>
       endpointRenderFormat(req, Png)
+
+    case req @ GET -> Root / "render" / "svg" / _ =>
+      endpointRenderFormat(req, Svg)
 
     case GET -> Root / "version" =>
       Ok(BuildInfo.version)

@@ -18,16 +18,16 @@ import scalaz.concurrent.Task
 import scalaz.syntax.bind._
 
 object Service extends StrictLogging {
-  val logRequestsKleisli: Kleisli[Task, Request, Request] =
-    Kleisli(req => logRequest(req).as(req))
-
-  val renderUrlRoute: PartialFunction[Request, Task[Response]] =
-    List(Bmp, Jpeg, Pdf, Png, Svg).map(renderUrlAsRoute).reduce(_ orElse _)
+  type Endpoint = Request => Task[Response]
+  type Route = PartialFunction[Request, Task[Response]]
 
   val bareRoute: HttpService = HttpService {
-    renderUrlRoute orElse {
+    val formats = List(Bmp, Jpeg, Pdf, Png, Svg)
+    val formatsRoute = formats.map(renderUrlRoute).reduce(_ orElse _)
+
+    formatsRoute orElse {
       case req @ POST -> Root / "render" =>
-        renderDocService(req)
+        renderDocEndpoint(req)
 
       case GET -> Root / "version" =>
         Ok(BuildInfo.version)
@@ -35,7 +35,7 @@ object Service extends StrictLogging {
   }
 
   val route: HttpService = Kleisli { req =>
-    logRequestsKleisli.andThen(bareRoute).run(req).handleWith(logException(req))
+    (logRequest(req) >> bareRoute.run(req)).handleWith(logException(req))
   }
 
   def docToResponse(doc: Document): Task[Response] =
@@ -58,19 +58,19 @@ object Service extends StrictLogging {
   def renderDoc(input: RenderingInput): Task[Response] =
     generic.renderDoc(input).runTask.flatMap(docToResponse)
 
-  def renderDocService(req: Request): Task[Response] =
-    req.decode[RenderingInput](renderDoc)(circe.jsonOf)
+  def renderDocEndpoint: Endpoint =
+    _.decode[RenderingInput](renderDoc)(circe.jsonOf)
 
-  def renderUrlAs(url: String, format: Format): Task[Response] =
+  def renderUrl(url: String, format: Format): Task[Response] =
     wkhtmltopdf.renderUrl(url, format).runTask.flatMap(docToResponse)
 
-  def renderUrlAsRoute(format: Format): PartialFunction[Request, Task[Response]] = {
-    case req @ GET -> Root / "render" / fmt / _ if fmt == format.toExtension =>
-      renderUrlAsService(req, format)
-  }
+  def renderUrlEndpoint(format: Format): Endpoint =
+    req => extractParam(req, "url").fold(BadRequest(_), renderUrl(_, format))
 
-  def renderUrlAsService(req: Request, format: Format): Task[Response] =
-    extractParam(req, "url").fold(BadRequest(_), renderUrlAs(_, format))
+  def renderUrlRoute(format: Format): Route = {
+    case req @ GET -> Root / "render" / fmt / _ if fmt == format.toExtension =>
+      renderUrlEndpoint(format)(req)
+  }
 
   def showRequest(req: Request): String =
     s"${req.method.name} ${req.uri.renderString}"

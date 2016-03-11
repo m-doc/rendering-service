@@ -8,7 +8,7 @@ import org.http4s.dsl._
 import org.mdoc.common.model.jvm.FormatOps
 import org.mdoc.common.model.Document
 import org.mdoc.common.model.Format
-import org.mdoc.common.model.Format.{ Bmp, Jpeg, Pdf, Png, Svg }
+import org.mdoc.common.model.Format._
 import org.mdoc.common.model.RenderingInput
 import org.mdoc.common.model.circe._
 import org.mdoc.fshell.Shell.ShellSyntax
@@ -34,6 +34,7 @@ object Service extends StrictLogging {
     }
   }
 
+  // impure
   val route: HttpService = Kleisli { req =>
     (logRequest(req) >> bareRoute.run(req)).handleWith(logException(req))
   }
@@ -46,12 +47,14 @@ object Service extends StrictLogging {
     Xor.fromOption(req.params.get(param), message)
   }
 
+  // impure
   def logException(req: Request): PartialFunction[Throwable, Task[Response]] = {
     case throwable =>
       Task.delay(logger.error(showRequest(req), throwable)) >>
         InternalServerError(throwable.getMessage)
   }
 
+  // impure
   def logRequest(req: Request): Task[Unit] =
     Task.delay(logger.debug(showRequest(req)))
 

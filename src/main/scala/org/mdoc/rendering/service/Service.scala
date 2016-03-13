@@ -22,7 +22,7 @@ object Service extends StrictLogging {
   type Route = PartialFunction[Request, Task[Response]]
 
   val bareRoute: HttpService = HttpService {
-    val formats = List(Bmp, Jpeg, Pdf, Png, Svg)
+    val formats = List(Bmp, Jpeg, Pdf, Png, Ppm, Svg)
     val formatsRoute = formats.map(renderUrlRoute).reduce(_ orElse _)
 
     formatsRoute orElse {

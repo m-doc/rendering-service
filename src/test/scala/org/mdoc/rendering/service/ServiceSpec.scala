@@ -30,6 +30,13 @@ object ServiceSpec extends Properties("Service") {
     Service.route.run(Request()).run.status ?= NotFound
   }
 
+  property("route: /render failure") = secure {
+    val req: Request = Request(uri = Uri(path = "/render"), method = POST)
+    val body = Service.route.run(req).run.body.runLast.run
+      .flatMap(_.decodeAscii.right.toOption).getOrElse("")
+    body ?= "Invalid JSON"
+  }
+
   property("route: /render/pdf/test.pdf") = secure {
     val req = Request(uri = Uri(path = "/render/pdf/test.pdf"))
     Service.route.run(req).run.status ?= BadRequest

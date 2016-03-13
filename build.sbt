@@ -1,5 +1,4 @@
 enablePlugins(MdocPlugin)
-enablePlugins(Jolokia)
 
 name := "rendering-service"
 
@@ -18,7 +17,7 @@ libraryDependencies ++= Seq(
 )
 
 // sbt-native-packager
-enablePlugins(JavaServerAppPackaging, DebianPlugin)
+enablePlugins(JavaServerAppPackaging, DebianPlugin, Jolokia)
 debianPackageDependencies in Debian ++= Seq(
   "libreoffice-writer",
   "pandoc",

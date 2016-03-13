@@ -34,7 +34,6 @@ object Service extends StrictLogging {
     }
   }
 
-  // impure
   val route: HttpService = Kleisli { req =>
     (logRequest(req) >> bareRoute.run(req)).handleWith(logException(req))
   }
